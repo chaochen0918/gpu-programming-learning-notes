@@ -1,4 +1,4 @@
-## General Matrix Multiplication (gemm)
+## General Matrix Multiplication (GeMM)
 
 1. naive kernel (done)
 2. tiled kernel (done)
