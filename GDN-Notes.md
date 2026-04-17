@@ -27,15 +27,18 @@ where
 ### Linear Attention
 Linear attention just removes the softmax function from softmax attention
 
-Training Form: $
+**Training Form**: 
 $$
-\mathbf{O} = \mathbf{Q}\mathbf{K}^\top V\in\mathbb{R}^{L \times d}
+\mathbf{O} = \mathbf{Q}\mathbf{K}^\top \mathbf{V}\in\mathbb{R}^{L \times d}
 $$
-Inference Form: $o = \sum\limits_i^{t}(q_t^Tk_i)v_i\in\mathbb{R}^{d}$ (row vector format, directly developed from Training form)
+**Inference Form** (row vector format, directly developed from Training form): 
+$$
+o = \sum\limits_i^{t}(q_t^Tk_i)v_i\in\mathbb{R}^{d}
+$$ 
 $$
 \mathbf{o_t} = \sum_{i=1}^{t}(\mathbf{q}_t\mathbf{k}_i^\top)\mathbf{v}_i^\top\in\mathbb{R}^{d}
 $$
-Inference Form (column vector format, a more conventional expression)
+**Inference Form** (column vector format, a more conventional expression)
 $$
 \mathbf{o_t} = \sum\limits_{i=1}^{t}(\mathbf{q}_t^\top \mathbf{k}_i)\mathbf{v}_i\in\mathbb{R}^{d}
 $$
@@ -95,5 +98,5 @@ $$
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTUxMDY0NTIxNiwtMjk4OTgwODg1XX0=
+eyJoaXN0b3J5IjpbODUzNzgyNjc2LC0yOTg5ODA4ODVdfQ==
 -->
