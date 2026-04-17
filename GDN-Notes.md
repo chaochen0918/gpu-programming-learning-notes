@@ -48,7 +48,9 @@ $$
 \\&&&&=\sum_{j=1}^{t}(\mathbf{v}_i\mathbf{k}_i^\top) \mathbf{q}_t &&&&\text{By associativity}
 \end{aligned}
 $$
-We can see that the output token given the $t^{th}$ token, $\mathbf{o_t}$ is the sum of the outer product of $\mathbf{v}_i$ and $\mathbf{k}_i$ queried by $\mathbf{q}_t$
+We can see that the output token given the $t^{th}$ token, $\mathbf{o_t}$ is the sum of the outer product of $\mathbf{v}_i$ and $\mathbf{k}_i$ queried by $\mathbf{q}_t$`<br \>`
+Let 
+
 
 ### Delta Net
 **Delta rule**: the goal of delta rule is to find the correctoptimal weights that correctly predict the output given a input and a target.
@@ -88,5 +90,5 @@ $$
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE0MTY4MDI3OSwtMjk4OTgwODg1XX0=
+eyJoaXN0b3J5IjpbLTE3NjA3OTYzMDIsLTI5ODk4MDg4NV19
 -->
