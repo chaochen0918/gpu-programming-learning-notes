@@ -27,10 +27,31 @@ where
 ### Linear Attention
 Linear attention just removes the softmax function from softmax attention
 
-Training Form: $O = QK^TV\in\mathbb{R}^{L \times d}$
-Inference Form: $o = \sum\limits_i^{t}(q_t^Tk_i)v_i\in\mathbb{R}^{d}$
+Training Form: $
+$$
+O = QK^T\top V\in\mathbb{R}^{L \times d}
+$$
+Inference Form: $o = \sum\limits_i^{t}(q_t^Tk_i)v_i\in\mathbb{R}^{d}$ (row vector format, directly developed from Training form)
+$$
+\mathbf{o_t} = \sum_{i=1}^{t}(\mathbf{q}_t\mathbf{k}_i^\top)\mathbf{v}_i^\top\in\mathbb{R}^{d}
+$$
+Inference Form (column vector format, a more conventional expression)
+$$
+\mathbf{o_t} = \sum\limits_{i=1}^{t}(\mathbf{q}_t^\top \mathbf{k}_i)\mathbf{v}_i\in\mathbb{R}^{d}
+$$
+
+Let's develop the **state matrix** of the linear attention using inference form (column format).
+$$
+\begin{aligned}
+&&&& \mathbf{o_t} = \sum_{i=1}^{t}(\mathbf{k}_i^\top \mathbf{q}_t)\mathbf{v}_i, &&&& \mathbf{q}_t^\top \mathbf{k}_i = \mathbf{k}_i^\top \mathbf{q}_t\in\mathbb{R}
+\\&&&&=\sum_{j=1}^{t}\mathbf{v}_i(\mathbf{k}_i^\top \mathbf{q}_t)
+\\&&&&=\sum_{j=1}^{t}(\mathbf{v}_i\mathbf{k}_i^\top) \mathbf{q}_t &&&&\text{By associativity}
+\end{aligned}
+$$
+We can see that the 
+
 ### Delta Net
-Delta rule: the goal of delta rule is to find the correct weights that correctly predict the output given a input and a target.
+**Delta rule**: the goal of delta rule is to find the correctoptimal weights that correctly predict the output given a input and a target.
 ```python
 import numpy as np
 def delta_rule(x, y, epoch = 100, lr = 0.1):
@@ -67,5 +88,5 @@ $$
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTI5ODk4MDg4NV19
+eyJoaXN0b3J5IjpbLTc5NjE4Mzg2NywtMjk4OTgwODg1XX0=
 -->
