@@ -32,9 +32,7 @@ $$
 \mathbf{O} = \mathbf{Q}\mathbf{K}^\top \mathbf{V}\in\mathbb{R}^{L \times d}
 $$
 **Inference Form** (row vector format, directly developed from Training form): 
-$$
-o = \sum\limits_i^{t}(q_t^Tk_i)v_i\in\mathbb{R}^{d}
-$$ 
+
 $$
 \mathbf{o_t} = \sum_{i=1}^{t}(\mathbf{q}_t\mathbf{k}_i^\top)\mathbf{v}_i^\top\in\mathbb{R}^{d}
 $$
@@ -51,7 +49,7 @@ $$
 \\&&&&=\sum_{j=1}^{t}(\mathbf{v}_i\mathbf{k}_i^\top) \mathbf{q}_t &&&&\text{By associativity}
 \end{aligned}
 $$
-We can see that the output token given the $t^{th}$ token, $\mathbf{o_t}$ is the sum of the outer product of $\mathbf{v}_i$ and $\mathbf{k}_i$ queried by $\mathbf{q}_t$`<br \>`
+We can see that the output token given the $t^{th}$ token, $\mathbf{o_t}$ is the sum of the outer product of $\mathbf{v}_i$ and $\mathbf{k}_i$ queried by $\mathbf{q}_t$
 Let 
 $$
 \begin{aligned}
@@ -61,7 +59,7 @@ $$
 \end{aligned}
 $$
 ### Delta Net
-**Delta rule**: the goal of delta rule is to find the correctoptimal weights that correctly predict the output given a input and a target.
+**Delta rule**: the goal of delta rule is to find the optimal weights that correctly predict the output given a input and a target.
 ```python
 import numpy as np
 def delta_rule(x, y, epoch = 100, lr = 0.1):
@@ -98,5 +96,5 @@ $$
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbODUzNzgyNjc2LC0yOTg5ODA4ODVdfQ==
+eyJoaXN0b3J5IjpbLTc5MDI1NzYsLTI5ODk4MDg4NV19
 -->
