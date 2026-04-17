@@ -54,6 +54,7 @@ $$
 \begin{aligned}
 \mathbf{S_t} & =\sum_{i=1}^t\mathbf{v}_i\mathbf{k}_i^\top
 \\&=\mathbf{S_{t-1}} + \sum_{i=1}^{t-1}\mathbf{v}_t\mathbf{k}_t^\top
+\\ \mathbf{o_t}=
 \end{aligned}
 $$
 
@@ -96,5 +97,5 @@ $$
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTgwNTkwMzc3LC0yOTg5ODA4ODVdfQ==
+eyJoaXN0b3J5IjpbMTEwNzcwOTA2MiwtMjk4OTgwODg1XX0=
 -->
