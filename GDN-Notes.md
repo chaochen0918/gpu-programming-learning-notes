@@ -29,7 +29,7 @@ Linear attention just removes the softmax function from softmax attention
 
 Training Form: $
 $$
-O = QK^T\top V\in\mathbb{R}^{L \times d}
+\mathbf{O} = \mathbf{Q}\mathbf{K}^\top V\in\mathbb{R}^{L \times d}
 $$
 Inference Form: $o = \sum\limits_i^{t}(q_t^Tk_i)v_i\in\mathbb{R}^{d}$ (row vector format, directly developed from Training form)
 $$
@@ -57,8 +57,6 @@ $$
 \mathbf{o_t} &=\mathbf{S_t}\mathbf{q_t}
 \end{aligned}
 $$
-
-
 ### Delta Net
 **Delta rule**: the goal of delta rule is to find the correctoptimal weights that correctly predict the output given a input and a target.
 ```python
@@ -97,5 +95,5 @@ $$
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTI4OTI1NjcyMCwtMjk4OTgwODg1XX0=
+eyJoaXN0b3J5IjpbMTUxMDY0NTIxNiwtMjk4OTgwODg1XX0=
 -->
