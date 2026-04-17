@@ -52,16 +52,11 @@ We can see that the output token given the $t^{th}$ token, $\mathbf{o_t}$ is the
 Let 
 $$
 \begin{aligned}
-&&&&\mathbf{S_t}=\sum_{i=1}^t\mathbf{v}_i\mathbf{k}_i^\top
-\\&&&&=\mathbf{S_{t-1}} + \sum_{i=1}^{t-1}\mathbf{v}_t\mathbf{k}_t^\top
+\mathbf{S_t} & =\sum_{i=1}^t\mathbf{v}_i\mathbf{k}_i^\top
+\\&=\mathbf{S_{t-1}} + \sum_{i=1}^{t-1}\mathbf{v}_t\mathbf{k}_t^\top
 \end{aligned}
 $$
-$$
-\begin{aligned}
-\mathbf{S_t} &= \sum_{i=1}^t\mathbf{v}_i\mathbf{k}_i^\top \\
-&= \mathbf{S_{t-1}} + \sum_{i=1}^{t-1}\mathbf{v}_t\mathbf{k}_t^\top
-\end{aligned}
-$$
+
 
 ### Delta Net
 **Delta rule**: the goal of delta rule is to find the correctoptimal weights that correctly predict the output given a input and a target.
@@ -101,5 +96,5 @@ $$
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3ODQzNjk5MjQsLTI5ODk4MDg4NV19
+eyJoaXN0b3J5IjpbLTgwNTkwMzc3LC0yOTg5ODA4ODVdfQ==
 -->
