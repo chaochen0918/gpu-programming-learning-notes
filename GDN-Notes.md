@@ -78,7 +78,7 @@ def delta_rule(x, y, epoch = 100, lr = 0.1):
 	
 	return w
 ```
-Delta net borrows the concept from delta rule, assuming the target = $\mathbf{v}_t$ ($\mathbf{v$ at $t^{th}$ token) and the prediction = $S_{t-1}k_t$ (State matrix at $t-1^{th}$ token, $S_{t-1}$, decoded by $k$ at $k^{th}$ token). This leads to the delta net's formula:
+Delta net borrows the concept from delta rule, assuming the target = $\mathbf{v}_t$ (value vector at $t^{th}$ token) and the prediction = $\mathbf{S_{t-1}}\mathbf{k}_t$ (State matrix at $t-1^{th}$ token, $S_{t-1}$, decoded by $k$ at $k^{th}$ token). This leads to the delta net's formula:
 
 $$
 S_t = S_{t-1} + \beta_t(S_{t-1}k_t - v_t)k_t^T
@@ -96,5 +96,5 @@ $$
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEzMTIzMDYwNzksLTI5ODk4MDg4NV19
+eyJoaXN0b3J5IjpbMTQ4MjU0MjUwOCwtMjk4OTgwODg1XX0=
 -->
