@@ -28,9 +28,9 @@ where
 Linear attention just removes the softmax function from softmax attention
 
 **Training Form**:
-$$
+```math
 \mathbf{O} = \mathbf{Q}\mathbf{K}^\top \mathbf{V}\in\mathbb{R}^{L \times d}
-$$
+```
 
 **Inference Form** (row vector format, directly developed from Training form):
 $$
