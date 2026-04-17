@@ -50,7 +50,11 @@ $$
 $$
 We can see that the output token given the $t^{th}$ token, $\mathbf{o_t}$ is the sum of the outer product of $\mathbf{v}_i$ and $\mathbf{k}_i$ queried by $\mathbf{q}_t$`<br \>`
 Let 
-
+$$
+\begin{aligned}
+&&&&\mathbf{S_t}=
+\end{aligned}
+$$
 
 ### Delta Net
 **Delta rule**: the goal of delta rule is to find the correctoptimal weights that correctly predict the output given a input and a target.
@@ -90,5 +94,5 @@ $$
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE3NjA3OTYzMDIsLTI5ODk4MDg4NV19
+eyJoaXN0b3J5IjpbMTYyODg1ODYxNSwtMjk4OTgwODg1XX0=
 -->
