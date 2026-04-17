@@ -17,8 +17,14 @@ graph LR
 ```
 ### Softmax Attention
 
-Forward Training Form: $O = Softmax(QK^T)V\in\mathbb{R}^{L \times d}$
-Inference Form: $o = \sum\limits_{i=1}^t\frac{exp(q_t^Tk_i)}{\sum\limits_{j=1}^texp(q_t^Tk_j)}v_i\in\mathbb{R}^{d}$
+Forward Training Form: 
+```math
+O = Softmax(QK^\top)V\in\mathbb{R}^{L \times d}
+```
+Inference Form: 
+```math
+o_t = \sum\limits_{i=1}^t\frac{exp(q_t^\top k_i)}{\sum\limits_{j=1}^texp(q_t^\top k_j)}v_i\in\mathbb{R}^{d}
+```
 
 where
  - $Q, K, V, O\in\mathbb{R}^{L \times d}$ is the query, key, value, output matrix
@@ -33,32 +39,32 @@ Linear attention just removes the softmax function from softmax attention
 ```
 
 **Inference Form** (row vector format, directly developed from Training form):
-$$
+```math
 \mathbf{o}_t = \sum_{i=1}^{t}(\mathbf{q}_t\mathbf{k}_i^\top)\mathbf{v}_i^\top\in\mathbb{R}^{d}
-$$
+```
 
 **Inference Form** (column vector format, a more conventional expression)
-$$
+```math
 \mathbf{o}_t = \sum_{i=1}^{t}(\mathbf{q}_t^\top \mathbf{k}_i)\mathbf{v}_i\in\mathbb{R}^{d}
-$$
+```
 
 Let's develop the **state matrix** of the linear attention using inference form (column format).
-$$
+```math
 \begin{aligned}
 \mathbf{o}_t &= \sum_{i=1}^{t}(\mathbf{k}_i^\top \mathbf{q}_t)\mathbf{v}_i, \quad \mathbf{q}_t^\top \mathbf{k}_i = \mathbf{k}_i^\top \mathbf{q}_t\in\mathbb{R} \\
 &= \sum_{i=1}^{t}\mathbf{v}_i(\mathbf{k}_i^\top \mathbf{q}_t) \\
 &= \sum_{i=1}^{t}(\mathbf{v}_i\mathbf{k}_i^\top) \mathbf{q}_t \quad \text{(By associativity)}
 \end{aligned}
-$$
+```
 We can see that the output token given the $t^{th}$ token, $\mathbf{o_t}$ is the sum of the outer product of $\mathbf{v}_i$ and $\mathbf{k}_i$ queried by $\mathbf{q}_t$
 Let 
-$$
+```math
 \begin{aligned}
 \mathbf{S_t} & =\sum_{i=1}^t\mathbf{v}_i\mathbf{k}_i^\top \\
 &=\mathbf{S_{t-1}} + \sum_{i=1}^{t-1}\mathbf{v}_t\mathbf{k}_t^\top \\
 \mathbf{o_t} &=\mathbf{S_t}\mathbf{q_t}
 \end{aligned}
-$$
+```
 ### Delta Net
 **Delta rule**: the goal of delta rule is to find the optimal weights that correctly predict the output given a input and a target.
 ```python
@@ -81,9 +87,9 @@ def delta_rule(x, y, epoch = 100, lr = 0.1):
 ```
 Delta net borrows the concept from delta rule, assuming the target = $\mathbf{v}_t$ (value vector at $t^{th}$ token) and the prediction = $\mathbf{S_{t-1}}\mathbf{k}_t$ (previous state matrix $\mathbf{S_{t-1}}$, decoded by key vector at $t^{th}$ token). This leads to the delta net's formula:
 
-$$
+```math
 \mathbf{S_t} = \mathbf{S_{t-1}} + \beta_t(\mathbf{S_{t-1}}\mathbf{k}_t - \mathbf{v}_t)\mathbf{k}_t^\top
-$$
+```
 
 ### Gated Delta Net
 
