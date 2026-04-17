@@ -27,7 +27,7 @@ where
 ### Linear Attention
 Linear attention just removes the softmax function from softmax attention
 
-**Training Form**: \\
+**Training Form**: 
 $$
 \mathbf{O} = \mathbf{Q}\mathbf{K}^\top \mathbf{V}\in\mathbb{R}^{L \times d}
 $$
@@ -96,5 +96,5 @@ $$
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMzExMzI1MTYwXX0=
+eyJoaXN0b3J5IjpbLTQxNzU3NDgwOCwzMTEzMjUxNjBdfQ==
 -->
