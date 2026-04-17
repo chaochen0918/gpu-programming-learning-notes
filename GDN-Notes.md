@@ -52,9 +52,9 @@ We can see that the output token given the $t^{th}$ token, $\mathbf{o_t}$ is the
 Let 
 $$
 \begin{aligned}
-\mathbf{S_t} & =\sum_{i=1}^t\mathbf{v}_i\mathbf{k}_i^\top
-\\&=\mathbf{S_{t-1}} + \sum_{i=1}^{t-1}\mathbf{v}_t\mathbf{k}_t^\top
-\\ \mathbf{o_t}=
+\mathbf{S_t} & =\sum_{i=1}^t\mathbf{v}_i\mathbf{k}_i^\top \\
+&=\mathbf{S_{t-1}} + \sum_{i=1}^{t-1}\mathbf{v}_t\mathbf{k}_t^\top \\
+\mathbf{o_t}=\mathbf{S_t}\mathbf{q_t}
 \end{aligned}
 $$
 
@@ -97,5 +97,5 @@ $$
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTEwNzcwOTA2MiwtMjk4OTgwODg1XX0=
+eyJoaXN0b3J5IjpbMTYyMjQ1MDM5MCwtMjk4OTgwODg1XX0=
 -->
