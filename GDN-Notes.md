@@ -78,10 +78,10 @@ def delta_rule(x, y, epoch = 100, lr = 0.1):
 	
 	return w
 ```
-Delta net borrows the concept from delta rule, assuming the target = $\mathbf{v}_t$ (value vector at $t^{th}$ token) and the prediction = $\mathbf{S_{t-1}}\mathbf{k}_t$ (previous state matrix $\mathbf{S_{t-1}}$, decoded by $k$ at $k^{th}$ token). This leads to the delta net's formula:
+Delta net borrows the concept from delta rule, assuming the target = $\mathbf{v}_t$ (value vector at $t^{th}$ token) and the prediction = $\mathbf{S_{t-1}}\mathbf{k}_t$ (previous state matrix $\mathbf{S_{t-1}}$, decoded by key vector at $t^{th}$ token). This leads to the delta net's formula:
 
 $$
-S_t = S_{t-1} + \beta_t(S_{t-1}k_t - v_t)k_t^T
+\mathbf{S_t} = \mathbf{S_{t-1} + \beta_t(S_{t-1}k_t - v_t)k_t^T
 $$
 
 ### Gated Delta Net
@@ -96,5 +96,5 @@ $$
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE4MTA1MDM0NjUsLTI5ODk4MDg4NV19
+eyJoaXN0b3J5IjpbLTE4NDE3Nzc4NCwtMjk4OTgwODg1XX0=
 -->
