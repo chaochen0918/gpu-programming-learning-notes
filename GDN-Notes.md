@@ -53,6 +53,7 @@ Let
 $$
 \begin{aligned}
 &&&&\mathbf{S_t}=\sum_{i=1}^t\mathbf{v}_i\mathbf{k}_i^\top
+\\&&&&=\mathbf{S_{t-1}} + \sum_{i=1}
 \end{aligned}
 $$
 
@@ -94,5 +95,5 @@ $$
 
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNzQwNjI4NzgsLTI5ODk4MDg4NV19
+eyJoaXN0b3J5IjpbMTI3MTY4MzEwMSwtMjk4OTgwODg1XX0=
 -->
