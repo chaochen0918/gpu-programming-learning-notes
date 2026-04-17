@@ -27,26 +27,27 @@ where
 ### Linear Attention
 Linear attention just removes the softmax function from softmax attention
 
-**Training Form**: 
+**Training Form**:
 $$
 \mathbf{O} = \mathbf{Q}\mathbf{K}^\top \mathbf{V}\in\mathbb{R}^{L \times d}
 $$
-**Inference Form** (row vector format, directly developed from Training form): 
 
+**Inference Form** (row vector format, directly developed from Training form):
 $$
-\mathbf{o_t} = \sum_{i=1}^{t}(\mathbf{q}_t\mathbf{k}_i^\top)\mathbf{v}_i^\top\in\mathbb{R}^{d}
+\mathbf{o}_t = \sum_{i=1}^{t}(\mathbf{q}_t\mathbf{k}_i^\top)\mathbf{v}_i^\top\in\mathbb{R}^{d}
 $$
+
 **Inference Form** (column vector format, a more conventional expression)
 $$
-\mathbf{o_t} = \sum\limits_{i=1}^{t}(\mathbf{q}_t^\top \mathbf{k}_i)\mathbf{v}_i\in\mathbb{R}^{d}
+\mathbf{o}_t = \sum_{i=1}^{t}(\mathbf{q}_t^\top \mathbf{k}_i)\mathbf{v}_i\in\mathbb{R}^{d}
 $$
 
 Let's develop the **state matrix** of the linear attention using inference form (column format).
 $$
 \begin{aligned}
-&&&& \mathbf{o_t} = \sum_{i=1}^{t}(\mathbf{k}_i^\top \mathbf{q}_t)\mathbf{v}_i, &&&& \mathbf{q}_t^\top \mathbf{k}_i = \mathbf{k}_i^\top \mathbf{q}_t\in\mathbb{R}
-\\&&&&=\sum_{j=1}^{t}\mathbf{v}_i(\mathbf{k}_i^\top \mathbf{q}_t)
-\\&&&&=\sum_{j=1}^{t}(\mathbf{v}_i\mathbf{k}_i^\top) \mathbf{q}_t &&&&\text{By associativity}
+\mathbf{o}_t &= \sum_{i=1}^{t}(\mathbf{k}_i^\top \mathbf{q}_t)\mathbf{v}_i, \quad \mathbf{q}_t^\top \mathbf{k}_i = \mathbf{k}_i^\top \mathbf{q}_t\in\mathbb{R} \\
+&= \sum_{i=1}^{t}\mathbf{v}_i(\mathbf{k}_i^\top \mathbf{q}_t) \\
+&= \sum_{i=1}^{t}(\mathbf{v}_i\mathbf{k}_i^\top) \mathbf{q}_t \quad \text{(By associativity)}
 \end{aligned}
 $$
 We can see that the output token given the $t^{th}$ token, $\mathbf{o_t}$ is the sum of the outer product of $\mathbf{v}_i$ and $\mathbf{k}_i$ queried by $\mathbf{q}_t$
