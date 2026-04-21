@@ -11,5 +11,6 @@
 - [Fused Softmax, Triton Official Tutorial](https://triton-lang.org/main/getting-started/tutorials/02-fused-softmax.html)
 ### Related topics
 - FlashAttention's online softmax
+- Persistent kernel vs One program/row
 ### Progress
 - implement fused softmax (in progress)
