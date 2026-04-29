@@ -33,6 +33,10 @@
  * of the programming guide with some additions like error checking.
  */
 
+ /*
+ Reference: https://github.com/NVIDIA/cuda-samples/tree/master/Samples/0_Introduction/vectorAdd
+ */
+
 #include <stdio.h>
 
 // For the CUDA runtime routines (prefixed with "cuda_")

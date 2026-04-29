@@ -7,6 +7,7 @@ where z = x + y
 /*
 TODOs:
 - compare the time running on CPU and GPU
+- correctness test
 */
 #include <stdio.h>
 #include <stdlib.h>
