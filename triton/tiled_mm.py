@@ -2,88 +2,94 @@ import triton
 import triton.language as tl
 import torch
 
-
 @triton.jit
 def tiled_matmul_kernel(
-    A_ptr, B_ptr, C_ptr,
+    A_ptr, 
+    B_ptr, 
+    C_ptr,
     M, N, K,
-    stride_am, stride_ak,
-    stride_bk, stride_bn,
-    stride_cm, stride_cn,
-    BLOCK_M: tl.constexpr,
-    BLOCK_N: tl.constexpr,
-    BLOCK_K: tl.constexpr,
-):
-    # Which output tile does this program instance own?
-    pid_m = tl.program_id(axis=0)
-    pid_n = tl.program_id(axis=1)
+    stride_a_m, stride_a_k, 
+    stride_b_n, stride_b_k,
+    stride_c_m, stride_c_n,
+    BLOCK_SIZE_M:tl.constexpr, 
+    BLOCL_SIZE_N:tl.constexpr,
+    BLOCK_SIZE_K:tl.constexpr
+    ):
+    # step 1: init pid in two dim, m and n
+    pid_m = tl.program_id(0)
+    pid_n = tl.program_id(1)
+    # step 2: locate A tile and B tile
+    offs_m = pid_m * BLOCK_SIZE_M + tl.arange(0, BLOCK_SIZE_M)
+    offs_n = pid_n * BLOCL_SIZE_N + tl.arange(0, BLOCL_SIZE_N)
 
-    # Row/col offsets for this tile (vectors of indices)
-    rm = pid_m * BLOCK_M + tl.arange(0, BLOCK_M)  # [BLOCK_M]
-    rn = pid_n * BLOCK_N + tl.arange(0, BLOCK_N)  # [BLOCK_N]
+    acc = tl.zeros((BLOCK_SIZE_M, BLOCK_SIZE_K), dtype=tl.float32)
+    for k_start in range(0, K, BLOCK_SIZE_K):
+        offs_k = k_start + tl.arange(0, BLOCK_SIZE_K)
 
-    # Accumulator: a BLOCK_M x BLOCK_N block of fp32
-    acc = tl.zeros((BLOCK_M, BLOCK_N), dtype=tl.float32)
+        a_ptrs = A_ptr + (offs_m[:, None] * stride_a_m + offs_k[None, :] * stride_a_k)
+        b_ptrs = B_ptr + (offs_k[:, None] * stride_b_k + offs_n[None, :] * stride_b_n)
 
-    # Iterate over K in BLOCK_K-wide strips
-    for k_start in range(0, K, BLOCK_K):
-        rk = k_start + tl.arange(0, BLOCK_K)  # [BLOCK_K]
+        # Boundary mask
+        a_mask = (offs_m[:, None] < M) & (offs_k[None, :] < K)
+        b_mask = (offs_k[:, None] < K) & (offs_n[None, :] < N)
 
-        # Build 2-D pointer arrays for the A and B tiles
-        # A tile: [BLOCK_M, BLOCK_K]
-        a_ptrs = A_ptr + (rm[:, None] * stride_am + rk[None, :] * stride_ak)
-        # B tile: [BLOCK_K, BLOCK_N]
-        b_ptrs = B_ptr + (rk[:, None] * stride_bk + rn[None, :] * stride_bn)
+        # load a_tile and b_tile from HBM to SRAM
+        a_tile = tl.load(a_ptrs, mask=a_mask, other=0)
+        b_tile = tl.load(b_ptrs, mask=b_mask, other=0)
 
-        # Boundary masks — handles M/N/K not divisible by block sizes
-        a_mask = (rm[:, None] < M) & (rk[None, :] < K)
-        b_mask = (rk[:, None] < K) & (rn[None, :] < N)
-
-        a = tl.load(a_ptrs, mask=a_mask, other=0.0)
-        b = tl.load(b_ptrs, mask=b_mask, other=0.0)
-
-        # Single tensor-core matmul over the tile — this is the key op
-        acc += tl.dot(a, b)
-
-    # Write the output tile back to C
-    c_ptrs = C_ptr + (rm[:, None] * stride_cm + rn[None, :] * stride_cn)
-    c_mask = (rm[:, None] < M) & (rn[None, :] < N)
+        # do matmul
+        acc += tl.dot(a_tile, b_tile)
+    
+    # locate C tile
+    c_ptrs = C_ptr + (offs_m[:, None] * stride_c_m + offs_n[None, :] * stride_c_n)
+    c_mask = (offs_m[:, None] < M) & (offs_n[None, :] < N)
     tl.store(c_ptrs, acc.to(tl.float16), mask=c_mask)
 
-
-def tiled_matmul(A: torch.Tensor, B: torch.Tensor,
-                 BLOCK_M=64, BLOCK_N=64, BLOCK_K=32) -> torch.Tensor:
-    assert A.ndim == 2 and B.ndim == 2
+def tile_matmul(
+    A: torch.Tensor, 
+    B: torch.Tensor, 
+    BLOCK_SIZE_M=64,
+    BLOCK_SIZE_N=64,
+    BLOCK_SIZE_K=64
+    ) -> torch.Tensor:
+    assert A.ndim == 2 and B.ndim == 2 
     assert A.shape[1] == B.shape[0]
-    assert A.is_cuda and B.is_cuda
 
     M, K = A.shape
-    _, N  = B.shape
+    _, N = B.shape
+    device = A.device
 
-    A = A.to(torch.float16)
-    B = B.to(torch.float16)
-    C = torch.empty((M, N), device=A.device, dtype=torch.float16)
+    C = torch.empty((M,N), device = device, dtype = torch.float16)
 
-    grid = (triton.cdiv(M, BLOCK_M), triton.cdiv(N, BLOCK_N))
-
-    tiled_matmul_kernel[grid](
-        A, B, C,
-        M, N, K,
-        A.stride(0), A.stride(1),
-        B.stride(0), B.stride(1),
-        C.stride(0), C.stride(1),
-        BLOCK_M=BLOCK_M, BLOCK_N=BLOCK_N, BLOCK_K=BLOCK_K,
+    program_num_m = triton.cdiv(M, BLOCK_SIZE_M)
+    program_num_n = triton.cdiv(N, BLOCK_SIZE_N)
+    
+    tiled_matmul_kernel[(program_num_m, program_num_n)](
+        A, B, C, M, N, K, 
+        A.stride(0), A.stride(1), B.stride(1), B.stride(0), C.stride(0), C.stride(1),
+        BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K
     )
+
     return C
 
-
-# --- Correctness check ---
-if __name__ == "__main__":
+if __name__ == '__main__':
     torch.manual_seed(0)
-    A = torch.randn(256, 512, device="cuda")
-    B = torch.randn(512, 128, device="cuda")
+    A = torch.randn((5000, 1000), device='cuda')
+    B = torch.randn((1000, 4000), device='cuda')
 
-    C_triton = tiled_matmul(A, B)
-    C_ref    = (A @ B).to(torch.float16)
+    C_triton = tile_matmul(A, B)
+    C_pytorch = (A @ B).to(torch.float16)
 
-    print("Max abs error:", (C_triton - C_ref).abs().max().item())
+    print("Max abs error:", (C_triton - C_pytorch).abs().max().item())
+
+
+
+
+
+
+
+
+
+
+    
+
