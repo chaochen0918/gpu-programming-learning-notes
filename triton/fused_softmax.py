@@ -1,133 +1,108 @@
-"""
-adapted from Triton's official tutorial: https://triton-lang.org/main/getting-started/tutorials/02-fused-softmax.html
-"""
 import torch
-
+from torch.types import Device
 import triton
 import triton.language as tl
-from triton.runtime import driver
-
-DEVICE = triton.runtime.driver.active.get_active_torch_device()
-properties = driver.active.utils.get_device_properties(DEVICE.index)
-NUM_SM = properties["multiprocessor_count"]
-NUM_REGS = properties["max_num_regs"]
-SIZE_SMEM = properties["max_shared_mem"]
-WARP_SIZE = properties["warpSize"]
-target = triton.runtime.driver.active.get_current_target()
-kernels = {}
-
-
-def is_hip():
-    return triton.runtime.driver.active.get_current_target().backend == "hip"
-
-
-def is_cdna():
-    return is_hip() and triton.runtime.driver.active.get_current_target().arch in ('gfx940', 'gfx941', 'gfx942',
-                                                                                   'gfx90a', 'gfx908')
-
-
-def naive_softmax(x):
-    """Compute row-wise softmax of X using native pytorch
-
-    We subtract the maximum element in order to avoid overflows. Softmax is invariant to
-    this shift.
-    """
-    # read  MN elements ; write M  elements
-    x_max = x.max(dim=1)[0]
-    # read MN + M elements ; write MN elements
-    z = x - x_max[:, None]
-    # read  MN elements ; write MN elements
-    numerator = torch.exp(z)
-    # read  MN elements ; write M  elements
-    denominator = numerator.sum(dim=1)
-    # read MN + M elements ; write MN elements
-    ret = numerator / denominator[:, None]
-    # in total: read 5MN + 2M elements ; wrote 3MN + 2M elements
-    return ret
 
 @triton.jit
-def softmax_kernel(output_ptr, input_ptr, input_row_stride, output_row_stride, n_rows, n_cols, BLOCK_SIZE: tl.constexpr,
-                   num_stages: tl.constexpr):
-    # starting row of the program
+def softmax_kernel(
+        input_ptr, 
+        output_ptr, 
+        input_stride, 
+        output_stride, 
+        n_rows, 
+        n_cols,
+        BLOCK_SIZE:tl.constexpr, 
+        num_stages:tl.constexpr
+    ):
     row_start = tl.program_id(0)
     row_step = tl.num_programs(0)
-    for row_idx in tl.range(row_start, n_rows, row_step, num_stages=num_stages):
-        # The stride represents how much we need to increase the pointer to advance 1 row
-        row_start_ptr = input_ptr + row_idx * input_row_stride
-        # The block size is the next power of two greater than n_cols, so we can fit each
-        # row in a single block
-        col_offsets = tl.arange(0, BLOCK_SIZE)
-        input_ptrs = row_start_ptr + col_offsets
-        # Load the row into SRAM, using a mask since BLOCK_SIZE may be > than n_cols
-        mask = col_offsets < n_cols
-        row = tl.load(input_ptrs, mask=mask, other=-float('inf'))
-        # Subtract maximum for numerical stability
-        row_minus_max = row - tl.max(row, axis=0)
-        # Note that exponentiation in Triton is fast but approximate (i.e., think __expf in CUDA)
-        numerator = tl.exp(row_minus_max)
-        denominator = tl.sum(numerator, axis=0)
-        softmax_output = numerator / denominator
-        # Write back output to DRAM
-        output_row_start_ptr = output_ptr + row_idx * output_row_stride
-        output_ptrs = output_row_start_ptr + col_offsets
-        tl.store(output_ptrs, softmax_output, mask=mask)
 
-def softmax(x):
+    for row_idx in tl.range(row_start, n_rows, row_step, num_stages=num_stages):
+        input_start_ptr = input_ptr + row_idx * input_stride
+        offsets = tl.arange(0, BLOCK_SIZE)
+        input_ptrs = input_start_ptr + offsets 
+        mask = offsets < n_cols
+
+        row = tl.load(input_ptrs, mask=mask, other=-float('inf'))
+        row = row - tl.max(row, axis=0)
+        numerator = tl.exp(row)
+        denominator = tl.sum(numerator, axis=0)
+        output_row = numerator / denominator
+
+        output_start_ptr = output_ptr + row_idx * output_stride
+        output_ptrs = output_start_ptr + offsets
+        tl.store(output_ptrs, output_row, mask=mask)
+
+# for computing how many programs (block) to launch
+DEVICE = triton.runtime.driver.active.get_active_torch_device()
+properties = triton.runtime.driver.active.utils.get_device_properties(DEVICE.index)
+NUM_SM = properties["multiprocessor_count"]
+NUM_REGISTER_PER_SM = properties["max_num_regs"]
+SIZE_SMEM = properties["max_shared_mem"]
+WARP_SIZE = properties["warpSize"]
+
+def softmax(x): # (M x N)
     n_rows, n_cols = x.shape
 
-    # The block size of each loop iteration is the smallest power of two greater than the number of columns in `x`
     BLOCK_SIZE = triton.next_power_of_2(n_cols)
-
-    # Another trick we can use is to ask the compiler to use more threads per row by
-    # increasing the number of warps (`num_warps`) over which each row is distributed.
-    # You will see in the next tutorial how to auto-tune this value in a more natural
-    # way so you don't have to come up with manual heuristics yourself.
-    num_warps = 8
-
+    num_warps = 8 # determine by the programmer
     # Number of software pipelining stages.
     num_stages = 4 if SIZE_SMEM > 200000 else 2
 
-    # Allocate output
     y = torch.empty_like(x)
 
-    # pre-compile kernel to get register usage and compute thread occupancy.
-    kernel = softmax_kernel.warmup(y, x, x.stride(0), y.stride(0), n_rows, n_cols, BLOCK_SIZE=BLOCK_SIZE,
-                                   num_stages=num_stages, num_warps=num_warps, grid=(1, ))
+    kernel = softmax_kernel.warmup(x, y, x.stride(0), y.stride(0), n_rows, n_cols, 
+                                BLOCK_SIZE=BLOCK_SIZE, num_stages=num_stages, grid=(1,))
+    
     kernel._init_handles()
-    n_regs = kernel.n_regs
-    size_smem = kernel.metadata.shared
-    if is_hip():
-        # NUM_REGS represents the number of regular purpose registers. On CDNA architectures this is half of all registers available.
-        # However, this is not always the case. In most cases all registers can be used as regular purpose registers.
-        # ISA SECTION (3.6.4 for CDNA3)
-        # VGPRs are allocated out of two pools: regular VGPRs and accumulation VGPRs. Accumulation VGPRs are used
-        # with matrix VALU instructions, and can also be loaded directly from memory. A wave may have up to 512 total
-        # VGPRs, 256 of each type. When a wave has fewer than 512 total VGPRs, the number of each type is flexible - it is
-        # not required to be equal numbers of both types.
-        NUM_GPRS = NUM_REGS
-        if is_cdna():
-            NUM_GPRS = NUM_REGS * 2
+    n_regs = kernel.n_regs# the register number that compiler optimized given a kernel
+    size_mem = kernel.metadata.shared# the shared memory compiler allocated given a kernel
 
-        # MAX_NUM_THREADS represents maximum number of resident threads per multi-processor.
-        # When we divide this number with WARP_SIZE we get maximum number of waves that can
-        # execute on a CU (multi-processor)  in parallel.
-        MAX_NUM_THREADS = properties["max_threads_per_sm"]
-        max_num_waves = MAX_NUM_THREADS // WARP_SIZE
-        occupancy = min(NUM_GPRS // WARP_SIZE // n_regs, max_num_waves) // num_warps
-    else:
-        occupancy = NUM_REGS // (n_regs * WARP_SIZE * num_warps)
-    occupancy = min(occupancy, SIZE_SMEM // size_smem)
-    num_programs = NUM_SM * occupancy
+    # assume a cuda backend
+    block_per_sm = min(
+        NUM_REGISTER_PER_SM // (n_regs * WARP_SIZE * num_warps), # block num from register
+        SIZE_SMEM // size_mem # block num from share memory
+    )
+    # return output # (M x N)
+    num_programs = NUM_SM * block_per_sm
 
-    num_programs = min(num_programs, n_rows)
+    kernel[(num_programs,1,1)](x, y, x.stride(0), y.stride(0), n_rows, n_cols, BLOCK_SIZE, num_stages)
 
-    # Create a number of persistent programs.
-    kernel[(num_programs, 1, 1)](y, x, x.stride(0), y.stride(0), n_rows, n_cols, BLOCK_SIZE, num_stages)
     return y
+
+@triton.testing.perf_report(
+    triton.testing.Benchmark(
+        x_names=['N'],  # argument names to use as an x-axis for the plot
+        x_vals=[128 * i for i in range(2, 100)],  # different possible values for `x_name`
+        line_arg='provider',  # argument name whose value corresponds to a different line in the plot
+        line_vals=['triton', 'torch'],  # possible values for `line_arg``
+        line_names=["Triton", "Torch"],  # label name for the lines
+        styles=[('blue', '-'), ('green', '-'), ('red', '-')],  # line styles
+        ylabel="GB/s",  # label name for the y-axis
+        plot_name="softmax-performance",  # name for the plot. Used also as a file name for saving the plot.
+        args={'M': 4096},  # values for function arguments not in `x_names` and `y_name`
+    ))
+def benchmark(M, N, provider):
+    x = torch.randn(M, N, device=DEVICE, dtype=torch.float32)
+    stream = getattr(torch, DEVICE.type).Stream()
+    getattr(torch, DEVICE.type).set_stream(stream)
+    if provider == 'torch':
+        ms = triton.testing.do_bench(lambda: torch.softmax(x, axis=-1))
+    if provider == 'triton':
+        ms = triton.testing.do_bench(lambda: softmax(x))
+    gbps = lambda ms: 2 * x.numel() * x.element_size() * 1e-9 / (ms * 1e-3)
+    return gbps(ms)
 
 if __name__ == '__main__':
     torch.manual_seed(0)
     x = torch.randn(1823, 781, device=DEVICE)
+
     y_triton = softmax(x)
-    y_torch = torch.softmax(x, axis=1)
+    y_torch = torch.softmax(x, axis = 1)
+
     assert torch.allclose(y_triton, y_torch), (y_triton, y_torch)
+
+    benchmark.run(show_plots=True, print_data=True, save_path='./')
+
+
+
