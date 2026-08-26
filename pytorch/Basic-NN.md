@@ -80,8 +80,10 @@ since $\mathbf{z}^{[l]} = \mathbf{W}^{[l]} \mathbf{a}^{[l-1]} + \mathbf{b}^{[l]}
 For a minibatch, average over examples:
 
 $$
-\frac{\partial J}{\partial \mathbf{W}^{[l]}} = \frac{1}{m} \sum_{i=1}^{m} \boldsymbol{\delta}^{[l](i)} \left(\mathbf{a}^{[l-1](i)}\right)^{\top}
+\frac{\partial J}{\partial \mathbf{W}^{[l]}} = \frac{1}{m} \sum_{i=1}^{m} \boldsymbol{\delta}_i^{[l]} \left(\mathbf{a}_i^{[l-1]}\right)^{\top}
 $$
+
+where the subscript $i$ indexes the $i$-th training example in the minibatch (i.e., $\boldsymbol{\delta}_i^{[l]}$ and $\mathbf{a}_i^{[l-1]}$ are the error signal and activation computed for example $i$).
 
 ---
 
