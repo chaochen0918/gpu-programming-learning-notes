@@ -1,2 +1,2 @@
-# gpu-programming-learning-notes
-my notes of learning GPU programming such as Triton and Cuda
+# gpu-programming-notes
+Chao-Chen's notes of learning GPU programming such as Triton and Cuda
